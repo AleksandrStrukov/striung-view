@@ -1,0 +1,40 @@
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <unordered_set> // Добавлен необходимый заголовок
+
+class Translator {
+public:
+    // Конструктор по умолчанию
+    Translator() = default;
+
+    // Добавление пары source-target
+    void Add(std::string_view source, std::string_view target) {
+        // Копируем строки в хранилище
+        auto source_it = storage_.emplace(std::string(source)).first;
+        auto target_it = storage_.emplace(std::string(target)).first;
+
+        // Обновляем словари переводов
+        forward_[*source_it] = *target_it;
+        backward_[*target_it] = *source_it;
+    }
+
+    // Перевод с языка 1 на язык 2
+    std::string_view TranslateForward(std::string_view source) const {
+        auto it = forward_.find(std::string(source));
+        return it != forward_.end() ? it->second : "";
+    }
+
+    // Перевод с языка 2 на язык 1
+    std::string_view TranslateBackward(std::string_view target) const {
+        auto it = backward_.find(std::string(target));
+        return it != backward_.end() ? it->second : "";
+    }
+
+private:
+    // Хранилище строк для обеспечения их уникальности и времени жизни
+    std::unordered_set<std::string> storage_;
+    // Словари для прямого и обратного перевода
+    std::unordered_map<std::string, std::string> forward_;
+    std::unordered_map<std::string, std::string> backward_;
+};
