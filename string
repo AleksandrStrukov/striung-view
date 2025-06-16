@@ -1,0 +1,125 @@
+#include <string>
+#include <cstddef>
+
+class Editor {
+private:
+    // Узел двусвязного списка
+    struct Node {
+        char data;        // Символ
+        Node* prev;       // Указатель на предыдущий узел
+        Node* next;       // Указатель на следующий узел
+        Node(char c) : data(c), prev(nullptr), next(nullptr) {}
+    };
+
+    Node* head;           // Указатель на начальный узел (фиктивный)
+    Node* cursor;         // Указатель на узел, перед которым находится курсор
+    std::string clipboard; // Буфер обмена
+
+    // Вспомогательная функция для очистки списка
+    void clear() {
+        Node* current = head->next;
+        while (current) {
+            Node* next = current->next;
+            delete current;
+            current = next;
+        }
+        head->next = nullptr;
+        cursor = head;
+    }
+
+public:
+    Editor() : head(new Node('\0')), cursor(head), clipboard("") {
+        // Инициализация пустого редактора с фиктивным начальным узлом
+    }
+
+    ~Editor() {
+        clear();
+        delete head;
+    }
+
+    void Left() {
+        if (cursor->prev) {
+            cursor = cursor->prev;
+        }
+    }
+
+    void Right() {
+        if (cursor->next) {
+            cursor = cursor->next;
+        }
+    }
+
+    void Insert(char token) {
+        Node* newNode = new Node(token);
+        newNode->prev = cursor;
+        newNode->next = cursor->next;
+        if (cursor->next) {
+            cursor->next->prev = newNode;
+        }
+        cursor->next = newNode;
+        cursor = newNode; // Курсор перемещается вправо
+    }
+
+    void Cut(size_t tokens = 1) {
+        if (tokens == 0 || !cursor->next) {
+            clipboard.clear();
+            return;
+        }
+
+        // Копируем подстроку в буфер
+        clipboard.clear();
+        Node* current = cursor->next;
+        size_t count = 0;
+        while (current && count < tokens) {
+            clipboard += current->data;
+            current = current->next;
+            count++;
+        }
+
+        // Удаляем скопированные узлы
+        Node* end = current;
+        current = cursor->next;
+        while (current != end) {
+            Node* next = current->next;
+            delete current;
+            current = next;
+        }
+        cursor->next = end;
+        if (end) {
+            end->prev = cursor;
+        }
+    }
+
+    void Copy(size_t tokens = 1) {
+        if (tokens == 0 || !cursor->next) {
+            clipboard.clear();
+            return;
+        }
+
+        // Копируем подстроку в буфер
+        clipboard.clear();
+        Node* current = cursor->next;
+        size_t count = 0;
+        while (current && count < tokens) {
+            clipboard += current->data;
+            current = current->next;
+            count++;
+        }
+    }
+
+    void Paste() {
+        for (char c : clipboard) {
+            Insert(c);
+        }
+    }
+
+    std::string GetText() const {
+        std::string result;
+        Node* current = head->next;
+        while (current) {
+            result += current->data;
+            current = current->next;
+        }
+        return result;
+    }
+};
